@@ -10,5 +10,6 @@
             <%= request.getParameter("error") != null ? "Invalid credentials" : "" %>
         </p>
     </form>
+    <a href="signup.jsp">Signup</a>
 </body>
 </html>
