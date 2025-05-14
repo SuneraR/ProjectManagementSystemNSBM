@@ -7,9 +7,9 @@
         <input type="password" name="password" placeholder="Password" required /><br/>
         <input type="submit" value="Login" />
         <p style="color:red;">
-            <%= request.getParameter("error") != null ? "Invalid credentials" : "" %>
+            <%= request.getParameter("errorMessage") != null ? "Invalid credentials" : "" %>
         </p>
     </form>
-    <a href="signup.jsp">Signup</a>
+    <a href="jsp/signup.jsp">Signup</a>
 </body>
 </html>
