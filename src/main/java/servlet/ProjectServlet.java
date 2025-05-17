@@ -91,12 +91,24 @@ public class ProjectServlet extends HttpServlet {
 
     private void listProjects(HttpServletRequest request, HttpServletResponse response, User currentUser)
             throws SQLException, ServletException, IOException {
+
         List<Project> tasksProjects = projectDAO.getProjectsByAssignedUser(currentUser.getId());
+        for (Project p : tasksProjects) {
+            boolean isCompleted = projectDAO.isProjectCompleted(p.getProjectId());
+            p.setIsCompleted(isCompleted); 
+        }
+
         List<Project> manageProjects = projectDAO.getProjectsByManager(currentUser.getId());
+        for (Project p : manageProjects) {
+            boolean isCompleted = projectDAO.isProjectCompleted(p.getProjectId());
+            p.setIsCompleted(isCompleted);
+        }
+
         request.setAttribute("tasksProjects", tasksProjects);
         request.setAttribute("manageProjects", manageProjects);
         request.getRequestDispatcher("/jsp/projectList.jsp").forward(request, response);
     }
+
 
     private void showNewForm(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {

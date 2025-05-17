@@ -160,21 +160,45 @@ public class ProjectDAO {
      * @return true if deletion was successful, false otherwise
      * @throws SQLException if a database error occurs
      */
+   
     public boolean deleteProject(int projectId) throws SQLException {
-        // First check if project exists
-        if (!projectExists(projectId)) {
-            return false;
-        }
+    	if (!projectExists(projectId)) {
+    		return false;
+    	}
+        String deleteCommentsSQL = "DELETE FROM comments WHERE task_id IN (SELECT task_id FROM tasks WHERE project_id = ?)";
+        String deleteTasksSQL = "DELETE FROM tasks WHERE project_id = ?";
+        String deleteProjectSQL = "DELETE FROM projects WHERE project_id = ?";
 
-        String sql = "DELETE FROM projects WHERE project_id = ?";
-        
-        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
-            stmt.setInt(1, projectId);
-            
-            int rowsAffected = stmt.executeUpdate();
-            return rowsAffected > 0;
+        try (Connection conn = DBconnection.getConnection()) {
+            conn.setAutoCommit(false);
+
+            try (
+                PreparedStatement deleteCommentsStmt = conn.prepareStatement(deleteCommentsSQL);
+                PreparedStatement deleteTasksStmt = conn.prepareStatement(deleteTasksSQL);
+                PreparedStatement deleteProjectStmt = conn.prepareStatement(deleteProjectSQL)
+            ) {
+                // Delete comments
+                deleteCommentsStmt.setInt(1, projectId);
+                deleteCommentsStmt.executeUpdate();
+
+                // Delete tasks
+                deleteTasksStmt.setInt(1, projectId);
+                deleteTasksStmt.executeUpdate();
+
+                // Delete project
+                deleteProjectStmt.setInt(1, projectId);
+                int rowsAffected = deleteProjectStmt.executeUpdate();
+
+                conn.commit();
+                return rowsAffected > 0;
+            } catch (SQLException e) {
+                conn.rollback();
+                throw e;
+            }
         }
     }
+
+
 
     /**
      * Helper method to check if a project exists
@@ -295,6 +319,22 @@ public class ProjectDAO {
             }
         }
         return -1; // Project not found or no manager
+    }
+    public boolean isProjectCompleted(int projectId) {
+        String sql = "SELECT COUNT(*) = 0 FROM tasks WHERE project_id = ? AND status != 'completed'";
+        try (Connection conn = DBconnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setInt(1, projectId);
+            ResultSet rs = stmt.executeQuery();
+            
+            if (rs.next()) {
+                return rs.getBoolean(1);  // true if all tasks are completed
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();  // Or use a proper logging mechanism
+        }
+        return false;  // Return false if error or no data
     }
 
 

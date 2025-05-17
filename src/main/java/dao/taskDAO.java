@@ -122,7 +122,7 @@ public class taskDAO {
 	    }
 	}
 
-	public boolean deleteTask(int taskId) throws SQLException {
+	public static boolean deleteTask(int taskId) throws SQLException {
 	    String sql = "DELETE FROM tasks WHERE task_id = ?";
 	    try (Connection conn =  DBconnection.getConnection();
 	         PreparedStatement stmt = conn.prepareStatement(sql)) {

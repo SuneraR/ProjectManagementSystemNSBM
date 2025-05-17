@@ -4,55 +4,31 @@
 <html>
 <head>
     <title>Project Details</title>
-    <style>
-        .container {
-            width: 80%;
-            margin: auto;
-        }
-
-        h2, h3 {
-            text-align: center;
-        }
-
-        table {
-            border-collapse: collapse;
-            width: 100%;
-            margin-top: 20px;
-        }
-
-        th, td {
-            border: 1px solid #ddd;
-            padding: 10px;
-        }
-
-        th {
-            background-color: #f4f4f4;
-        }
-
-        .btn {
-            padding: 6px 10px;
-            background-color: #007bff;
-            color: white;
-            border-radius: 3px;
-            text-decoration: none;
-        }
-
-        .btn:hover {
-            background-color: #0056b3;
-        }
-
-        .back-link {
-            margin-top: 20px;
-            display: inline-block;
-        }
-    </style>
+    <!-- Bootstrap CSS CDN -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
 <body>
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <div class="container-fluid">
+         <a class="navbar-brand" href="#"> 
+        <img alt="Logo" src="${pageContext.request.contextPath}/images/logo.png" class="img-fluid" style="width: 80px; height: auto;" />
+        </a>
+        <div class="collapse navbar-collapse">
+            <ul class="navbar-nav ms-auto">
+                <li class="nav-item">
+                    <a class="nav-link" href="projectForm.jsp">Create Project</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="../ProjectServlet">All Projects</a>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+<div class="container my-5">
+    <h2 class="text-center mb-4">Project Details</h2>
 
-<div class="container">
-    <h2>Project Details</h2>
-
-    <table>
+    <table class="table table-bordered">
         <tr>
             <th>Name</th>
             <td>${project.name}</td>
@@ -71,82 +47,78 @@
         </tr>
     </table>
 
-    <h3>Tasks</h3>
+    <h3 class="text-center mt-5">Tasks</h3>
 
     <c:if test="${not empty tasks}">
-        <table>
-            <thead>
-            <tr>
-                <th>Title</th>
-                <th>Description</th>
-                <th>Status</th>
-                <th>Deadline</th>
-                <th>Assigned To</th>
-                <th>Comments</th>
-                 <c:if test="${currentUser.id == project.managerId}">
-      <th>Actions</th>
-    </c:if>
-                
-            </tr>
-            </thead>
-            <tbody>
-            <c:forEach var="task" items="${tasks}">
+        <div class="table-responsive">
+            <table class="table table-striped table-bordered mt-3">
+                <thead class="table-light">
                 <tr>
-                    <td>${task.title}</td>
-                    <td>${task.description}</td>
-                    
-       <td>             	<c:choose>
-    <c:when test="${currentUser.id == task.assignedTo}">
-      <form action="SaveTaskServlet" method="post">
-    <input type="hidden" name="taskId" value="${task.taskId}" />
-
-    <select name="status">
-        <option value="pending" ${task.status == 'pending' ? 'selected' : ''}>Pending</option>
-        <option value="in_progress" ${task.status == 'in_progress' ? 'selected' : ''}>In Progress</option>
-        <option value="completed" ${task.status == 'completed' ? 'selected' : ''}>Completed</option>
-    </select>
-
-    <button type="submit">Update Status</button>
-</form>
-
-    </c:when>
-    <c:otherwise>
-        ${task.status}
-    </c:otherwise>
-</c:choose>
-</td>
-                    <td>${task.deadline}</td>
-                    <td>${task.assignedToName}</td> 
-                     <c:if test="${currentUser.id == project.managerId}">
-                    <td>
-
-                            <a class="btn" href="DeleteTaskServlet?taskId=${task.taskId}" onclick="return confirm('Delete this task?');">Delete</a>
-                    </td>
-                        </c:if>
-                        
-                        <td>
-                        <a href="ViewCommentsServlet?taskId=${task.taskId}">
-                        Comments
-                        </a>
-                        </td>
-                        
+                    <th>Title</th>
+                    <th>Description</th>
+                    <th>Status</th>
+                    <th>Deadline</th>
+                    <th>Assigned To</th>
+                    <th>Comments</th>
+                    <c:if test="${currentUser.id == project.managerId}">
+                        <th>Actions</th>
+                    </c:if>
                 </tr>
-            </c:forEach>
-            </tbody>
-        </table>
+                </thead>
+                <tbody>
+                <c:forEach var="task" items="${tasks}">
+                    <tr>
+                        <td>${task.title}</td>
+                        <td>${task.description}</td>
+                        <td>
+                            <c:choose>
+                                <c:when test="${currentUser.id == task.assignedTo}">
+                                    <form action="SaveTaskServlet" method="post" class="d-flex gap-2">
+                                        <input type="hidden" name="taskId" value="${task.taskId}" />
+                                        <select name="status" class="form-select form-select-sm w-auto">
+                                            <option value="pending" ${task.status == 'pending' ? 'selected' : ''}>Pending</option>
+                                            <option value="in_progress" ${task.status == 'in_progress' ? 'selected' : ''}>In Progress</option>
+                                            <option value="completed" ${task.status == 'completed' ? 'selected' : ''}>Completed</option>
+                                        </select>
+                                        <button type="submit" class="btn btn-sm btn-primary">Update</button>
+                                    </form>
+                                </c:when>
+                                <c:otherwise>
+                                    ${task.status}
+                                </c:otherwise>
+                            </c:choose>
+                        </td>
+                        <td>${task.deadline}</td>
+                        <td>${task.assignedToName}</td>
+                        <td>
+                            <a href="ViewCommentsServlet?taskId=${task.taskId}" class="btn btn-sm btn-info text-white">Comments</a>
+                        </td>
+                        <c:if test="${currentUser.id == project.managerId}">
+                            <td>
+                                <a class="btn btn-sm btn-warning" href="EditTaskServlet?taskId=${task.taskId}">Edit</a>
+                                <a class="btn btn-sm btn-danger" href="DeleteTaskServlet?taskId=${task.taskId}&projectId=${project.projectId}" onclick="return confirm('Delete this task?');">Delete</a>
+                            </td>
+                        </c:if>
+                    </tr>
+                </c:forEach>
+                </tbody>
+            </table>
+        </div>
     </c:if>
 
     <c:if test="${empty tasks}">
-        <p>No tasks found for this project.</p>
+        <div class="alert alert-info mt-4">No tasks found for this project.</div>
     </c:if>
 
     <c:if test="${currentUser.id == project.managerId}">
-        <a class="btn" href="CreateTaskServlet?projectId=${project.projectId}">Add Task</a>
+        <a class="btn btn-success mt-3" href="CreateTaskServlet?projectId=${project.projectId}">Add Task</a>
     </c:if>
 
-    <br>
-    <a class="back-link" href="ProjectServlet">← Back to Project List</a>
+    <br><br>
+    <a class="btn btn-secondary" href="ProjectServlet">← Back to Project List</a>
 </div>
 
+<!-- Bootstrap JS Bundle (optional if you use Bootstrap JS features) -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

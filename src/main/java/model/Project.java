@@ -9,6 +9,7 @@ public class Project {
     private int managerId;  // Now required since manager is always the creator
     private LocalDate startDate;
     private LocalDate endDate;
+    private boolean isCompleted;
 
     // Constructors
     public Project() {
@@ -72,6 +73,12 @@ public class Project {
     public void setEndDate(LocalDate endDate) {
         this.endDate = endDate;
     }
+    public boolean getIsCompleted() {
+    	return isCompleted;
+    }
+    public void setIsCompleted(boolean isCompleted) {
+    	this.isCompleted=isCompleted;
+    }
 
     // Utility methods
     public boolean isActive() {
@@ -80,6 +87,7 @@ public class Project {
                (endDate == null || !today.isAfter(endDate));
     }
 
+    
     @Override
     public String toString() {
         return "Project{" +
@@ -90,4 +98,6 @@ public class Project {
                 ", endDate=" + endDate +
                 '}';
     }
+
+
 }

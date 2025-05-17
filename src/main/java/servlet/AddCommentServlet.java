@@ -44,11 +44,11 @@ public class AddCommentServlet extends HttpServlet {
             
         } catch (NumberFormatException e) {
             request.setAttribute("error", "Invalid task or user ID format");
-            request.getRequestDispatcher("/error.jsp").forward(request, response);
+            request.getRequestDispatcher("jsp/error.jsp").forward(request, response);
         } catch (SQLException e) {
             e.printStackTrace();
             request.setAttribute("error", "Database error: " + e.getMessage());
-            request.getRequestDispatcher("/error.jsp").forward(request, response);
+            request.getRequestDispatcher("jsp/error.jsp").forward(request, response);
         }
     }
 }
