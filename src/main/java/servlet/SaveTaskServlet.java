@@ -9,6 +9,7 @@ import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
 
 import java.io.IOException;
 import java.sql.SQLException;
@@ -27,10 +28,15 @@ public class SaveTaskServlet extends HttpServlet {
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
+    	
         int taskId = Integer.parseInt(request.getParameter("taskId"));
         String action=request.getParameter("status");
         User currentUser = (User) request.getSession().getAttribute("user");
-
+        
+        if (currentUser == null) {
+            response.sendRedirect("jsp/login.jsp");
+            return;
+        }
         try {
             Task task = taskDAO.getTaskById(taskId);
             if (task == null) {

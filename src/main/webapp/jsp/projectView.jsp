@@ -82,6 +82,7 @@
                 <th>Status</th>
                 <th>Deadline</th>
                 <th>Assigned To</th>
+                <th>Comments</th>
                  <c:if test="${currentUser.id == project.managerId}">
       <th>Actions</th>
     </c:if>
@@ -115,14 +116,20 @@
 </c:choose>
 </td>
                     <td>${task.deadline}</td>
-                    <td>${task.assignedToName}</td> <!-- assume you populate this field in the servlet -->
+                    <td>${task.assignedToName}</td> 
                      <c:if test="${currentUser.id == project.managerId}">
                     <td>
-                            <a class="btn" href="EditTaskServlet?taskId=${task.taskId}">Edit</a>
 
                             <a class="btn" href="DeleteTaskServlet?taskId=${task.taskId}" onclick="return confirm('Delete this task?');">Delete</a>
                     </td>
                         </c:if>
+                        
+                        <td>
+                        <a href="ViewCommentsServlet?taskId=${task.taskId}">
+                        Comments
+                        </a>
+                        </td>
+                        
                 </tr>
             </c:forEach>
             </tbody>
@@ -138,7 +145,7 @@
     </c:if>
 
     <br>
-    <a class="back-link" href="ProjectListServlet">← Back to Project List</a>
+    <a class="back-link" href="ProjectServlet">← Back to Project List</a>
 </div>
 
 </body>

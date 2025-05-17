@@ -40,6 +40,11 @@ public class ViewProject extends HttpServlet {
 	        throws ServletException, IOException {
 		 HttpSession session = request.getSession();
 		User currentUser = (User) session.getAttribute("user");
+	        
+	        if (currentUser == null) {
+	            response.sendRedirect("jsp/login.jsp");
+	            return;
+	        }
 	    try {
 	        
 	        // Get and validate projectId

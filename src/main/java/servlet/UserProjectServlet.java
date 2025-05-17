@@ -38,6 +38,12 @@ public class UserProjectServlet extends HttpServlet {
 	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 		HttpSession session = request.getSession();
         User currentUser = (User) session.getAttribute("user");
+
+        
+        if (currentUser == null) {
+            response.sendRedirect("jsp/login.jsp");
+            return;
+        }
 		int userId = 0 ;
 		if(currentUser!=null) {
 			userId=currentUser.getId();

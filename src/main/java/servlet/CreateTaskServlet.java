@@ -40,7 +40,13 @@ public class CreateTaskServlet extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
         throws ServletException, IOException {
-        
+    	  HttpSession session = request.getSession();
+          User currentUser = (User) session.getAttribute("user");
+          
+          if (currentUser == null) {
+              response.sendRedirect("jsp/login.jsp");
+              return;
+          }
         int projectId = Integer.parseInt(request.getParameter("projectId"));
         Project project = null;
 		try {
@@ -78,7 +84,7 @@ public class CreateTaskServlet extends HttpServlet {
             // Check if current user is the manager of this project
             if (currentUser == null || currentUser.getId() != managerId) {
                 request.setAttribute("errorMessage", "Only the assigned manager of this project can create tasks.");
-                request.getRequestDispatcher("jsp/createTask.jsp").forward(request, response);
+                request.getRequestDispatcher("jsp/login.jsp").forward(request, response);
                 return;
             }
 
