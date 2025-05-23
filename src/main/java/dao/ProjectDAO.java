@@ -16,13 +16,8 @@ import util.DBconnection;
 public class ProjectDAO {
     private Connection conn;
 
-    public ProjectDAO(Connection conn) {
-    	try {
-			this.conn = DBconnection.getConnection();
-		} catch (SQLException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+    public ProjectDAO() throws SQLException {
+        this.conn = DBconnection.getConnection();
     }
 
     public List<Project> getProjectsByManager(int managerId) throws SQLException {
@@ -65,12 +60,10 @@ public class ProjectDAO {
                      "JOIN tasks t ON p.project_id = t.project_id " +
                      "WHERE t.assigned_to = ?";
 
-        try (Connection conn = DBconnection.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
+        try (PreparedStatement stmt = this.conn.prepareStatement(sql)) {
             stmt.setInt(1, userId);
-            ResultSet rs = stmt.executeQuery();
-
-            while (rs.next()) {
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
                 Project project = new Project();
                 project.setProjectId(rs.getInt("project_id"));
                 project.setName(rs.getString("name"));
@@ -233,26 +226,32 @@ public class ProjectDAO {
             throw new IllegalArgumentException("End date cannot be before start date");
         }
 
-        Connection conn = null;
+        // Connection conn = null; // Removed, use this.conn
         PreparedStatement stmt = null;
         boolean success = false;
+        boolean originalAutoCommitState = true; // Default to true
         
         try {
-           
-            conn.setAutoCommit(false); // Start transaction
+            originalAutoCommitState = this.conn.getAutoCommit(); // Store original auto-commit state
+            this.conn.setAutoCommit(false); // Start transaction on this.conn
             
             // First verify project exists and get current manager_id
             String verifySql = "SELECT manager_id FROM projects WHERE project_id = ? FOR UPDATE";
-            stmt = conn.prepareStatement(verifySql);
+            // stmt = conn.prepareStatement(verifySql); // Use this.conn
+            stmt = this.conn.prepareStatement(verifySql);
             stmt.setInt(1, project.getProjectId());
             
             ResultSet rs = stmt.executeQuery();
             if (!rs.next()) {
+                rs.close(); // Close result set
+                stmt.close(); // Close statement
+                this.conn.rollback(); // Rollback if project not found
                 return false; // Project not found
             }
             
             int currentManagerId = rs.getInt("manager_id");
-            stmt.close();
+            rs.close();   // Close ResultSet
+            stmt.close(); // Close PreparedStatement
             
             // Update project
             String updateSql = "UPDATE projects SET " +
@@ -260,7 +259,8 @@ public class ProjectDAO {
                              "start_date = ?, end_date = ? " +
                              "WHERE project_id = ?";
             
-            stmt = conn.prepareStatement(updateSql);
+            // stmt = conn.prepareStatement(updateSql); // Use this.conn
+            stmt = this.conn.prepareStatement(updateSql);
             stmt.setString(1, project.getName());
             stmt.setString(2, project.getDescription());
             
@@ -283,26 +283,36 @@ public class ProjectDAO {
             
             // If manager was changed (though typically shouldn't be allowed)
             if (project.getManagerId() != currentManagerId) {
+                // Need to close the previous statement if reusing the variable 'stmt'
+                if (stmt != null) stmt.close(); 
                 String updateManagerSql = "UPDATE projects SET manager_id = ? WHERE project_id = ?";
-                stmt = conn.prepareStatement(updateManagerSql);
+                // stmt = conn.prepareStatement(updateManagerSql); // Use this.conn
+                stmt = this.conn.prepareStatement(updateManagerSql);
                 stmt.setInt(1, project.getManagerId());
                 stmt.setInt(2, project.getProjectId());
                 stmt.executeUpdate();
             }
             
-            conn.commit(); // Commit if all went well
+            this.conn.commit(); // Commit if all went well using this.conn
             
         } catch (SQLException e) {
-            if (conn != null) {
-                conn.rollback(); // Rollback on error
+            if (this.conn != null) {
+                this.conn.rollback(); // Rollback on error using this.conn
             }
             throw e;
         } finally {
-            if (stmt != null) stmt.close();
-            if (conn != null) {
-                conn.setAutoCommit(true); // Reset auto-commit
-                conn.close();
+            if (stmt != null) {
+                try { stmt.close(); } catch (SQLException e) { e.printStackTrace(); /* Log this */ }
             }
+            // Restore original auto-commit state for this.conn
+            if (this.conn != null) {
+                try {
+                    this.conn.setAutoCommit(originalAutoCommitState);
+                } catch (SQLException ex) {
+                    ex.printStackTrace(); // Or use a proper logging mechanism
+                }
+            }
+            // Removed: conn.close();
         }
         
         return success;
@@ -310,30 +320,38 @@ public class ProjectDAO {
     
     public int getManagerIdByProject(int projectId) throws SQLException {
         String sql = "SELECT manager_id FROM projects WHERE project_id = ?";
-        try (Connection conn = DBconnection.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
+        // try (Connection conn = DBconnection.getConnection(); // Removed
+        //      PreparedStatement stmt = conn.prepareStatement(sql)) { // Use this.conn
+        try (PreparedStatement stmt = this.conn.prepareStatement(sql)) {
             stmt.setInt(1, projectId);
-            ResultSet rs = stmt.executeQuery();
-            if (rs.next()) {
-                return rs.getInt("manager_id");
+            // ResultSet rs = stmt.executeQuery(); // Use try-with-resources for ResultSet
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt("manager_id");
+                }
             }
         }
         return -1; // Project not found or no manager
     }
     public boolean isProjectCompleted(int projectId) {
         String sql = "SELECT COUNT(*) = 0 FROM tasks WHERE project_id = ? AND status != 'completed'";
-        try (Connection conn = DBconnection.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
-
+        // try (Connection conn = DBconnection.getConnection(); // Removed
+        //      PreparedStatement stmt = conn.prepareStatement(sql)) { // Use this.conn
+        try (PreparedStatement stmt = this.conn.prepareStatement(sql)) {
             stmt.setInt(1, projectId);
-            ResultSet rs = stmt.executeQuery();
-            
-            if (rs.next()) {
-                return rs.getBoolean(1);  // true if all tasks are completed
+            // ResultSet rs = stmt.executeQuery(); // Use try-with-resources for ResultSet
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getBoolean(1);  // true if all tasks are completed
+                }
             }
         } catch (SQLException e) {
-            e.printStackTrace();  // Or use a proper logging mechanism
+            // e.printStackTrace();  // Removed
+            throw e; // Re-throw the SQLException
         }
+        // This line is now unreachable if an SQLException occurs, which is intended.
+        // If the try block completes without returning and without an exception (e.g. rs.next() is false), 
+        // it will fall through to here.
         return false;  // Return false if error or no data
     }
 

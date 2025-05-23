@@ -57,45 +57,28 @@ public class UserDAO {
         }
     }
 
-    public User getUserByCredentials(String username, String passwordHash) throws SQLException {
-        String sql = "SELECT * FROM users WHERE name = ? AND password = ?";
+    public void close() throws SQLException {
+        if (conn != null && !conn.isClosed()) {
+            conn.close();
+        }
+    }
+    public User getUserByUsernameAndPassword(String username, String passwordHash) throws SQLException {
+        String sql = "SELECT user_id, name, email, password, role FROM users WHERE name = ? AND password = ?";
         try (PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setString(1, username);
             stmt.setString(2, passwordHash);
 
             try (ResultSet rs = stmt.executeQuery()) {
                 if (rs.next()) {
+                    // Assuming User constructor: User(id, name, email, passwordHash, role)
+                    // Or that User has appropriate setters for all these fields.
                     return new User(
                         rs.getInt("user_id"),
                         rs.getString("name"),
                         rs.getString("email"),
-                        rs.getString("password"),
+                        rs.getString("password"), // This is the password hash from DB
                         User.Role.fromString(rs.getString("role"))
                     );
-                }
-            }
-        }
-        return null;
-    }
-
-    public void close() throws SQLException {
-        if (conn != null && !conn.isClosed()) {
-            conn.close();
-        }
-    }
-    public User getUserByUsernameAndPassword(String username, String password) throws SQLException {
-        String sql = "SELECT * FROM users WHERE name = ? AND password = ?";
-        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
-            stmt.setString(1, username);
-            stmt.setString(2, password); // NOTE: Plaintext passwords are insecure
-
-            try (ResultSet rs = stmt.executeQuery()) {
-                if (rs.next()) {
-                    User user = new User();
-                    user.setId(rs.getInt("user_id"));
-                    user.setUsername(rs.getString("name"));
-                    user.setRole(rs.getString("role")); // if you have a role column
-                    return user;
                 }
             }
         }
@@ -112,7 +95,8 @@ public class UserDAO {
                     String passwordHash = rs.getString("password");
                     // Check if password hash exists
                     if (passwordHash == null || passwordHash.isEmpty()) {
-                        throw new SQLException("No password hash found for user");
+                        // Return null if password hash is not found, as per requirement
+                        return null; 
                     }
                     
                     return new User(
@@ -132,16 +116,22 @@ public class UserDAO {
         
         
         public List<User> getAllManagers() throws SQLException {
-            String sql = "SELECT user_id, username FROM users WHERE role = 'manager'";
+            String sql = "SELECT user_id, name, email, password, role FROM users WHERE role = 'manager'";
             List<User> managers = new ArrayList<>();
             
             try (PreparedStatement stmt = conn.prepareStatement(sql);
                  ResultSet rs = stmt.executeQuery()) {
                 
                 while (rs.next()) {
-                    User manager = new User();
-                    manager.setId(rs.getInt("user_id"));
-                    manager.setUsername(rs.getString("username"));
+                    // Assuming User constructor: User(id, name, email, passwordHash, role)
+                    // Or that User has appropriate setters for all these fields.
+                    User manager = new User(
+                        rs.getInt("user_id"),
+                        rs.getString("name"),
+                        rs.getString("email"),
+                        rs.getString("password"), // This is the password hash from DB
+                        User.Role.fromString(rs.getString("role"))
+                    );
                     managers.add(manager);
                 }
             }
@@ -151,17 +141,21 @@ public class UserDAO {
         
         public List<User> getUsersByRole(String role) throws SQLException {
             List<User> users = new ArrayList<>();
-            String sql = "SELECT * FROM users WHERE role = ?";
+            String sql = "SELECT user_id, name, email, password, role FROM users WHERE role = ?";
 
             try ( PreparedStatement stmt = conn.prepareStatement(sql)) {
                 stmt.setString(1, role);
                 try (ResultSet rs = stmt.executeQuery()) {
                     while (rs.next()) {
-                        User user = new User();
-                        user.setId(rs.getInt("user_id"));
-                        user.setUsername(rs.getString("name"));
-                        user.setEmail(rs.getString("email"));
-                        user.setRole(rs.getString("role"));
+                        // Assuming User constructor: User(id, name, email, passwordHash, role)
+                        // Or that User has appropriate setters for all these fields.
+                        User user = new User(
+                            rs.getInt("user_id"),
+                            rs.getString("name"),
+                            rs.getString("email"),
+                            rs.getString("password"), // This is the password hash from DB
+                            User.Role.fromString(rs.getString("role"))
+                        );
                         users.add(user);
                     }
                 }
